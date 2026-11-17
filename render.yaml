@@ -1,0 +1,29 @@
+# Deploy the stand-alone FastAPI research entrypoint; NOT local DeepSeek Harness.
+# Plan/limits: Render Free sleeps after inactivity and has ephemeral filesystem.
+services:
+  - type: web
+    name: eventlens-research-demo
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.11"
+      - key: EVENTLENS_PUBLIC_DEMO
+        value: "1"
+      - key: EVENTLENS_PUBLIC_COOKIE_SECURE
+        value: "1"
+      - key: EVENTLENS_DB
+        value: /tmp/eventlens.sqlite3
+      - key: EVENTLENS_IFIND_NEWS
+        value: "0"
+      - key: EVENTLENS_DEMO_MAX_RESEARCH
+        value: "12"
+      - key: EVENTLENS_DEMO_MAX_ASK
+        value: "24"
+      - key: DEEPSEEK_MODEL
+        value: deepseek-flash
+      - key: DEEPSEEK_API_KEY
+        sync: false
