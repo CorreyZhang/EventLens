@@ -92,3 +92,38 @@ def test_public_frontend_reveals_actual_result_cards(monkeypatch, tmp_path):
     assert "#workspace:not([hidden]) .tabs" in script.text
     assert "#workspace:not([hidden]) .columns" in script.text
     assert "min-height: 100vh" in script.text
+
+
+def test_cloud_twin_preserves_original_workbench_without_native_harness(monkeypatch, tmp_path):
+    app, alice, bob = clients(monkeypatch, tmp_path)
+    response = alice.get("/cloud-workstation")
+    assert response.status_code == 200
+    assert 'id="research"' in response.text
+    assert 'src="/static/cloud-chat.html"' in response.text
+    assert 'id="eventTrack"' not in response.text  # original left is in the iframe
+    assert response.headers.get("x-frame-options") == "SAMEORIGIN"
+    embedded = alice.get("/?embedded=1&cloud=1")
+    assert embedded.status_code == 200
+    assert "/static/workbench.js?v=0.5.0" in embedded.text
+    assert "public-ui.js" not in embedded.text
+    assert embedded.headers["x-frame-options"] == "SAMEORIGIN"
+    chat = alice.get("/static/cloud-chat.html")
+    assert chat.status_code == 200
+    assert "cloud-chat.js" in chat.text
+    assert chat.headers["x-frame-options"] == "SAMEORIGIN"
+    assert alice.get("/static/cloud-workstation.js").status_code == 200
+    assert alice.get("/static/cloud-chat.js").status_code == 200
+
+    new = alice.post("/api/research", json={
+        "question": "同花顺季度报告有哪些可验证的公告？", "mode": "live"
+    })
+    assert new.status_code == 202
+    rid = new.json()["id"]
+    visible = alice.get(f"/api/workspace/research/{rid}/view")
+    assert visible.status_code == 200
+    result = visible.json()
+    assert result["research_id"] == rid
+    assert result["market"]["status"] == "unavailable"
+    assert bob.get(f"/api/workspace/research/{rid}/view").status_code == 404
+    assert alice.post(f"/api/workspace/research/{rid}/view", json={}).status_code == 404
+    assert alice.get("/api/workspace/state").status_code == 404
