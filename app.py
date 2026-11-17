@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import providers
@@ -175,7 +175,16 @@ def create_app(db_path=None):
     install(app,store)
 
     @app.get('/')
-    def home(): return FileResponse(ROOT/'static'/'index.html')
+    def home():
+        if public_access.enabled():
+            # The public site uses the original independent research UX and
+            # keeps the native Harness iframe/localhost workbench disabled.
+            page=(ROOT/'static'/'index.html').read_text(encoding='utf-8')
+            page=page.replace('class="v03"', 'class="v03 public-demo"')
+            page=page.replace('<script src="/static/workbench.js?v=0.5.0"></script>',
+                              '<script src="/static/public-ui.js?v=1"></script>')
+            return HTMLResponse(page)
+        return FileResponse(ROOT/'static'/'index.html')
     @app.get('/api/health')
     def health(): return {'status':'ok','version':'0.5.0','fuyao_configured':(bool(os.getenv('FUYAO_API_KEY')) or __import__('finance_runtime').available()),'ifind_configured':__import__('finance_runtime').available(),'deepseek_configured':bool(os.getenv('DEEPSEEK_API_KEY')),'market_configured':bool(os.getenv('ALPHAVANTAGE_API_KEY'))}
     @app.get('/api/research')
