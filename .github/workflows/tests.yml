@@ -35,6 +35,8 @@ jobs:
           node --check static/app.js
           node --check static/workbench.js
           node --check static/public-ui.js
+          node --check static/cloud-workstation.js
+          node --check static/cloud-chat.js
           node --check harness-navigation/client.js
           node --check harness_session_bridge.mjs
           node --test tests/js/navigation.test.cjs
