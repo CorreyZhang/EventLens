@@ -28,7 +28,7 @@ node --test tests/js/navigation.test.cjs
 
 ## 历史记录（不能替代本仓库新运行）
 
-用户 Mac v0.5 最终回执：**121 passed in 1.83s**（Python），**4 passed**（Node）。实际浏览器操作与离线 fixtures 分别记载。本仓库独立 CI 的结果以仓库 Actions 为准，尚未在此文件预先宣称 CI 通过。
+用户 Mac v0.5 最终回执：**121 passed in 1.83s**（Python），**4 passed**（Node）。实际浏览器操作与离线 fixtures 分别记载。**新仓库独立 CI 已通过**：[GitHub Actions 运行 #44101895960](https://github.com/CorreyZhang/EventLens/actions/runs/44101895960)。Python **121 passed（5 warnings）**，Node **4 passed**，JS 语法检查与 Python 编译均通过。该结果只覆盖无密钥自动化测试，不是公网真实金融源或多用户安全验收。
 
 ## 提交前手工验收
 

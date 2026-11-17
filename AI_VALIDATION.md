@@ -21,7 +21,7 @@
 
 ## 验证范围与不足
 
-- Codex 在用户 Mac 本地报告：v0.5 **121 项 Python 回归、4 项 Node 导航测试通过**；测试包含构造 fixture。此仓库重新导出后仍需 GitHub Actions 独立运行，不能把旧回执冒充新 CI 通过。
+- Codex 在用户 Mac 本地报告：v0.5 **121 项 Python 回归、4 项 Node 导航测试通过**；测试包含构造 fixture。独立 GitHub Actions 已于 2026-11-17 在新仓库成功执行：**121项 Python 回归通过、4项 Node 测试通过**（无真实 API Key 的 fixture 验证）。[查看 CI 回执](https://github.com/CorreyZhang/EventLens/actions/runs/44101895960)。CI 通过不代表真实公网 AI 检索已验收。
 - 真实原生 Harness 测试包括宁德时代、未预置海天味业、欧盟政策、同花顺季报、历史会话和无直接证据场景。记录详见 `LIVE_VALIDATION_V05.md`。
 - 单独外部网站再次抓取3条引文未匹配成功（403、动态页、202 响应）；不等于证据造假，但独立来源复核**未通过**，不能将“抓取内容内精确匹配”表述为源头真实性。
 - iFinD 新闻接口在一次真实复测中失败，公告接口为空；保留失败诊断，不能写成“iFinD已完整可用”。
