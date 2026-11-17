@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EventLens · 对话研究工作台</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#1d1d1f;background:#f5f5f7}
+*{box-sizing:border-box}body{margin:0}
+header{height:60px;display:flex;align-items:center;gap:15px;padding:0 21px;background:#fff;border-bottom:1px solid #e4e4e8}
+header strong{font-size:20px;letter-spacing:-.6px}header span{font-size:12px;color:#6e6e73;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header a{color:#0066cc;font-size:12px;text-decoration:none;margin-left:auto;white-space:nowrap}
+.workspace{display:grid;grid-template-columns:minmax(0,58fr) minmax(360px,42fr);height:calc(100dvh - 60px)}
+.workspace>section{display:flex;flex-direction:column;min-height:0;min-width:0;position:relative}
+.workspace>section+section{border-left:1px solid #ddd}
+.caption{display:flex;align-items:center;gap:10px;height:40px;min-height:40px;padding:0 17px;font-size:12px;color:#6e6e73;background:#fafafa}
+.caption strong{color:#2e2e31;font-weight:600}.status{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.caption a{margin-left:auto;color:#0066cc;text-decoration:none}
+iframe{width:100%;flex:1;min-height:0;border:0;background:white}
+#studyOverlay{position:absolute;z-index:4;inset:40px 0 0;background:#f5f5f7;display:none;place-items:center;text-align:center;padding:35px}
+#studyOverlay.visible{display:grid}
+#studyOverlay h2{font-size:23px;margin:0 0 10px}
+#studyOverlay p{font-size:13px;line-height:1.85;color:#777;max-width:380px}
+#referenceTray{background:#fff;border-bottom:1px solid #e5e5e9;padding:10px 14px;display:none;flex-direction:column;gap:8px;max-height:170px;overflow:auto}
+#referenceTray.visible{display:flex}
+.tray-head{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:#555}
+.tray-head small{color:#8e8e93}
+.ref{display:flex;gap:10px;align-items:center;border:1px solid #e4e4e9;background:#f8f8fa;border-radius:8px;padding:8px 10px}
+.ref .quote{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:#48484a}
+.ref button{background:transparent;border:0;color:#0071e3;cursor:pointer;font-size:12px;white-space:nowrap}
+#bridgeStatus{height:auto;min-height:0;font-size:11px;color:#8e6d25;padding:0 17px;display:none;background:#fffbea}
+#bridgeStatus.visible{display:block;padding:7px 17px}
+nav{display:none}
+@media(max-width:850px){
+header{padding:0 12px}header span{display:none}
+.workspace{display:block;height:calc(100dvh - 104px)}
+.workspace>section{height:100%}.workspace>section+section{display:none;border:0}
+body[data-pane="agent"] .workspace>section:first-child{display:none}
+body[data-pane="agent"] .workspace>section+section{display:flex}
+nav{height:44px;display:flex;gap:8px;padding:5px 12px;background:white}
+nav button{flex:1;border:0;border-radius:8px;background:#eaeaea;color:#444}
+nav button.active{background:#0071e3;color:white}
+}
+</style>
+</head>
+<body data-pane="research">
+<header><strong>◈ EventLens</strong><span id="studyTitle">对话即研究 · 证据可以引用</span><a href="/" target="_blank">独立研究窗口 ↗</a></header>
+<nav><button class="active" data-pane="research">信息与证据</button><button data-pane="agent">AI 对话</button></nav>
+<main class="workspace">
+<section id="researchPane">
+  <div class="caption"><strong>研究空间</strong><span class="status" id="selection">等待右侧开启对话</span></div>
+  <iframe id="research" title="EventLens 新闻、行情与证据"></iframe>
+  <div id="studyOverlay"><div><h2 id="overlayTitle">新的研究</h2><p id="overlayMessage">在右侧 Harness 输入第一个问题，左侧将围绕话题整理新闻、事件与行情。</p></div></div>
+</section>
+<section id="agentPane">
+  <div class="caption"><strong>DeepSeek Harness</strong><span class="status" id="agentSelection">对话驱动研究</span><a href="/harness/open" target="_blank">独立打开 ↗</a></div>
+  <div id="bridgeStatus" role="status"></div>
+  <div id="referenceTray" aria-label="待发送的证据引用">
+    <div class="tray-head"><strong>已引用到当前研究</strong><small>下一次发送提问时作为证据，不会自动提问</small></div>
+    <div id="refs"></div>
+  </div>
+  <iframe id="agent" src="/harness/open" title="官方 DeepSeek Harness 对话与插件管理"></iframe>
+</section>
+</main>
+<script>
+const researchFrame=document.querySelector('#research');
+const overlay=document.querySelector('#studyOverlay');
+const tray=document.querySelector('#referenceTray');
+const refs=document.querySelector('#refs');
+const status=document.querySelector('#bridgeStatus');
+let shownResearch=null;
+let latestState=null;
+let lastForwardedFocus='';
+let navigationReady=false, visibleSession=null, navigationRevision=0;
+let navigationQueue=Promise.resolve();
+function notice(text){status.textContent=text;status.classList.toggle('visible',Boolean(text))}
+function renderReferences(items){
+  tray.classList.toggle('visible',items.length>0);
+  refs.replaceChildren();
+  for(const item of items){
+    const row=document.createElement('div');row.className='ref';
+    const label=document.createElement('span');label.className='quote';label.textContent=item.quote;
+    label.title=item.quote;
+    const remove=document.createElement('button');remove.textContent='移除';remove.type='button';
+    remove.setAttribute('aria-label','移除引用');
+    remove.onclick=async()=>{
+      try{await fetchJSON('/api/workspace/reference/'+encodeURIComponent(item.id),{method:'DELETE'});await update()}
+      catch(e){notice('移除引用失败：'+e.message)}
+    };
+    row.append(label,remove);refs.append(row);
+  }
+}
+async function fetchJSON(url,options){
+  const response=await fetch(url,options||{});
+  const data=await response.json();
+  if(!response.ok)throw Error(data.detail||('HTTP '+response.status));
+  return data;
+}
+function forwardFocus(active,force=false){
+  if(!active||active.research_id!==shownResearch||!active.last_prompt)return;
+  const signature=JSON.stringify([active.session_id,active.research_id,active.last_seq,active.focus]);
+  if(!force&&signature===lastForwardedFocus)return;
+  researchFrame.contentWindow.postMessage({
+    type:'eventlens:focus',research_id:active.research_id,
+    text:active.last_prompt,seq:active.last_seq,focus:active.focus||null
+  },location.origin);
+  lastForwardedFocus=signature;
+}
+function switchStudy(id){
+  if(shownResearch===id)return;
+  shownResearch=id;
+  lastForwardedFocus='';
+  const base='/?embedded=1&v=0.5.0';
+  researchFrame.src=base+(id?'#'+encodeURIComponent(id):'');
+  if(id)location.hash=id;else history.replaceState(null,'',location.pathname);
+}
+researchFrame.addEventListener('load',()=>forwardFocus(latestState?.active,true));
+async function update(){
+  const revision=navigationRevision;
+  const data=await fetchJSON('/api/workspace/state');
+  if(revision!==navigationRevision)return;
+  const active=navigationReady&&data.active?.session_id===visibleSession?data.active:null;
+  latestState={...data,active};
+  if(!active){
+    document.querySelector('#selection').textContent='右侧开始新对话，即创建新的研究';
+    document.querySelector('#studyTitle').textContent='对话即研究 · 证据可以引用';
+    switchStudy('');
+    overlay.classList.add('visible');
+    document.querySelector('#overlayTitle').textContent='等待新的研究对话';
+    document.querySelector('#overlayMessage').textContent='请在右侧开启新对话并提问。此处不会继续显示上次研究的股票或证据。';
+  }else{
+    const currentSubject=active.focus?.subject;
+    document.querySelector('#selection').textContent=currentSubject
+      ?'当前焦点：'+currentSubject+' · '+(active.question||''):(active.question||'新研究');
+    document.querySelector('#studyTitle').textContent=currentSubject||active.question||'新研究';
+    switchStudy(active.research_id);
+    forwardFocus(active);
+    const blank=active.status==='draft'||active.status==='awaiting_evidence';
+    overlay.classList.toggle('visible',blank);
+    document.querySelector('#overlayTitle').textContent=active.status==='draft'?'新的研究':'正在收集研究证据';
+    document.querySelector('#overlayMessage').textContent=active.status==='draft'
+      ?'请在右侧输入第一个问题。新对话拥有独立的研究空间。'
+      :'研究对象：'+(active.focus?.subject||active.question)+'。只有取得可核验来源后才展示时间线，绝不沿用上一公司新闻。';
+  }
+  renderReferences(active?(data.references||[]):[]);
+  try{
+    const selected=await fetchJSON('/api/harness/selection');
+    if(revision!==navigationRevision)return;
+    document.querySelector('#agentSelection').textContent=selected.event&&selected.research_id===active?.research_id
+      ?'当前事件 · '+selected.event.action+' · '+(selected.market_window?.symbol||'')
+      : active?'当前研究 · '+active.question:'对话驱动研究';
+  }catch{
+    document.querySelector('#agentSelection').textContent=active?'当前研究 · '+active.question:'对话驱动研究';
+  }
+}
+window.addEventListener('message',async event=>{
+  if(event.origin==='http://127.0.0.1:3080'&&event.source===document.querySelector('#agent').contentWindow){
+    const message=event.data;
+    if(!message||message.type!=='eventlens:session-active'||
+       !(message.session_id===null||typeof message.session_id==='string'&&/^[a-zA-Z0-9_-]{1,180}$/.test(message.session_id)))return;
+    navigationReady=true;visibleSession=message.session_id;navigationRevision++;
+    // Clear the old pane immediately, before any request can finish.
+    switchStudy('');renderReferences([]);overlay.classList.add('visible');
+    document.querySelector('#overlayTitle').textContent='正在切换研究';
+    const id=message.session_id;
+    navigationQueue=navigationQueue.then(()=>fetchJSON('/api/workspace/session-event',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kind:id?'session_activated':'session_deactivated',session_id:id||'none'})
+    })).then(()=>update()).catch(e=>notice('会话同步失败：'+e.message));
+    return;
+  }
+  if(event.origin!==location.origin||event.source!==researchFrame.contentWindow)return;
+  const data=event.data;
+  if(!data||data.type!=='eventlens:quote'||!data.reference)return;
+  const r=data.reference;
+  if(!r.research_id||!r.event_id||!r.source_id||typeof r.quote!=='string')return;
+  try{
+    await fetchJSON('/api/workspace/reference',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(r)
+    });
+    notice('已加入引用。现在可在右侧输入追问，引用不会自动发送。');
+    await update();
+  }catch(e){notice('无法引用：'+e.message)}
+});
+document.querySelectorAll('button[data-pane]').forEach(button=>button.onclick=()=>{
+  document.body.dataset.pane=button.dataset.pane;
+  document.querySelectorAll('button[data-pane]').forEach(b=>b.classList.toggle('active',b===button));
+});
+switchStudy('');
+update().catch(e=>notice('工作台连接失败：'+e.message));
+setInterval(()=>update().catch(e=>notice('研究状态暂时不可用：'+e.message)),1200);
+</script>
+</body>
+</html>
