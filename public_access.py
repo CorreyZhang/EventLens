@@ -145,7 +145,7 @@ def install(app):
         if new_guest:
             response.set_cookie(
                 COOKIE_NAME, gate.sign(guest), httponly=True, samesite="lax",
-                secure=request.url.scheme == "https",
+                secure=(request.url.scheme == "https" or os.getenv("EVENTLENS_PUBLIC_COOKIE_SECURE") == "1"),
                 max_age=60 * 60 * 24, path="/",
             )
         response.headers["X-Content-Type-Options"] = "nosniff"
