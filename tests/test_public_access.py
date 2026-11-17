@@ -80,3 +80,15 @@ def test_public_home_loads_research_interface_not_local_harness(monkeypatch, tmp
     assert '<script src="/static/workbench.js' not in result.text
     assert 'id="researchForm"' in result.text
     assert guest.get("/static/public-ui.js").status_code == 200
+
+
+def test_public_frontend_reveals_actual_result_cards(monkeypatch, tmp_path):
+    _, guest, _ = clients(monkeypatch, tmp_path)
+    script = guest.get("/static/public-ui.js")
+    assert script.status_code == 200
+    # The standalone FastAPI UI must unhide the existing evidence+versions
+    # panels when native Harness is disabled.
+    assert "classList.add('show-legacy')" in script.text
+    assert "#workspace:not([hidden]) .tabs" in script.text
+    assert "#workspace:not([hidden]) .columns" in script.text
+    assert "min-height: 100vh" in script.text
