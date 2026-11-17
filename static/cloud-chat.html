@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EventLens · AI 研究对话</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#26272c;background:#fff;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;display:flex;flex-direction:column;min-height:100dvh;height:100dvh}
+button,textarea{font:inherit}button{cursor:pointer}
+.head{padding:15px 20px;border-bottom:1px solid #e7e8ed;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.head strong{font-size:15px}.head span{display:block;margin-top:3px;font-size:10px;color:#85868d}
+.head button{padding:7px 11px;font-size:11px;color:#0071e3;background:#f1f6ff;border:0;border-radius:9px}
+#thread{padding:22px 19px;flex:1;overflow-y:auto;min-height:0}
+.hello{padding:14vh 8px 15px;text-align:center}.hello h2{font-size:23px;font-weight:600}.hello p{color:#777b83;font-size:13px;line-height:1.8}
+.hints{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin-top:16px}
+.hints button{background:#f6f7f9;border:1px solid #e7e8ed;border-radius:11px;padding:11px 12px;color:#3e444e;text-align:left;font-size:12px;line-height:1.6}
+.bubble{margin:12px 0;max-width:97%;font-size:13px;line-height:1.9;overflow-wrap:anywhere}
+.bubble.user{margin-left:auto;max-width:85%;width:fit-content;background:#eef3ff;padding:10px 14px;border-radius:14px;color:#1c4775}
+.bubble.ai{padding:12px 5px}
+.bubble .mark{display:block;color:#7c7f89;font-size:10px;letter-spacing:.6px;margin-bottom:6px}
+.bubble p{margin:5px 0 12px}.bubble ul{padding-left:17px}
+.line{display:flex;gap:8px;align-items:flex-start;line-height:1.7;margin:10px 0}
+.line .num{flex-shrink:0;color:#999ba3;font-size:10px;font-variant-numeric:tabular-nums;margin-top:2px}
+.proof{padding:9px 11px;background:#f7f9fc;border-left:2px solid #a9c3ee;border-radius:3px;margin:11px 0;color:#5c6270;font-size:11px}
+.proof a{color:#0066bf;text-decoration:none}.meta{font-size:11px;color:#81848b}
+.status{font-size:12px;color:#717785;padding:8px 20px;min-height:23px}
+.error{color:#a64242}
+.composer{margin:5px 14px 14px;border:1px solid #dce1e8;border-radius:16px;background:#fff;box-shadow:0 2px 14px #181f2b08;padding:11px}
+#references{display:none;padding:5px 9px 10px;color:#446485;font-size:11px}
+#references.visible{display:block}
+#prompt{display:block;border:0;outline:0;resize:vertical;min-height:75px;max-height:150px;width:100%;line-height:1.65;font-size:13px;color:#202226}
+.controls{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:8px}
+.controls small{font-size:10px;color:#a0a0a7}.controls button{border:0;background:#0071e3;color:white;border-radius:11px;padding:9px 14px;font-size:12px;font-weight:500}
+.controls button:disabled{opacity:.5}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;color:#efeff2;background:#1b1b1e}.head{border-color:#343439}.head button{background:#29394b;color:#9ac5ff}.hello p,.meta,.status{color:#aaaeb6}.hints button,.composer{background:#29292d;border-color:#3c3c42;color:#e9e9ed}.bubble.user{background:#233449;color:#c6dfff}.bubble.ai{color:#ededf1}.proof{background:#282c35;color:#c2c7d1}.proof a{color:#8cbeff}#prompt{background:transparent;color:#f4f4f6}}
+</style>
+</head>
+<body>
+<div class="head"><div><strong>AI 事件研究</strong><span>实际 DeepSeek 检索 · 云端适配，非原生 Harness</span></div><button id="newStudy" type="button">＋ 新对话</button></div>
+<div id="thread" role="log" aria-live="polite"><div class="hello"><h2>问一问，追到来源。</h2><p>输入公司、政策或投资事件。研究完成后<br>左侧自动显示时间线与证据。</p>
+<div class="hints"><button type="button" data-example="同花顺最新季度报告有哪些事实？请查找原始公告">核对同花顺最新季报</button><button type="button" data-example="宁德时代近期有哪些重要公告？区分事实与观点">整理宁德时代近期事件</button></div></div></div>
+<div class="status" id="status">仅用于公开面试演示，依据不足会明确报错，不生成虚假资料。</div>
+<form id="composer" class="composer">
+<div id="references"></div>
+<textarea id="prompt" maxlength="1000" placeholder="输入一个值得核查的投资事件…（Shift + Enter 换行）" aria-label="提问内容" required></textarea>
+<div class="controls"><small>证据由 AI 整理，判断由你决定</small><button id="submit" type="submit">发送 ↗</button></div>
+</form>
+<script defer src="/static/cloud-chat.js?v=1"></script>
+</body>
+</html>
