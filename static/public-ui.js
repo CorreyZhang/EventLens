@@ -36,6 +36,14 @@
     body.public-demo .public-demo-note strong { display: block; margin-bottom: 3px; }
   `;
   document.head.appendChild(style);
+  const workspace = document.querySelector('#workspace');
+  const syncWorkspaceVisibility = () => {
+    document.body.classList.toggle('has-result', !!workspace && !workspace.hidden);
+  };
+  if (workspace) {
+    new MutationObserver(syncWorkspaceVisibility).observe(workspace, {attributes:true, attributeFilter:['hidden']});
+    syncWorkspaceVisibility();
+  }
   const intro = document.querySelector('.intro');
   if (intro) {
     const note = document.createElement('div');
