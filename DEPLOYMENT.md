@@ -2,7 +2,7 @@
 
 ## 当前状态（不要误认为已经上线）
 
-该代码仍以 **FastAPI 8765 + 本地 DeepSeek Harness 3080 + SQLite** 运行。原生 Harness 和一些金融接口依赖单机进程及本地回环地址，直接将仓库连接 Render 免费 Web Service **不能保证**原生双栏工作台可用。
+本仓库有本机 **FastAPI + DeepSeek Harness + SQLite** 与已单独适配的 **Render Free 单服务研究页**。公网只运行 FastAPI 自带的独立研究链路，**不提供本机原生 Harness 双栏**。从 GitHub 连接 Render 并设置服务端 Key 之后才能创建 URL，见 [RENDER_DEPLOY.md](RENDER_DEPLOY.md)。独立访客隔离属于轻量演示防护，不是生产认证。
 
 GitHub Pages 只能托管静态资源，**不能运行 Python 后端或安全保存 DeepSeek Key**。本仓库不是 GitHub Pages 离线演示替代品，避免将静态截图冒充 AI 产品。
 

@@ -38,3 +38,9 @@ node --test tests/js/navigation.test.cjs
 - 换另一公司，旧公司新闻、行情、引用全部清除；缺数据有明确提示。
 - 无模型 Key 或上游失败，不得生成“正常”的事实和价格。
 - 以外网地址、无痕模式测试，确认不得读取其他访客研究、私人数据或 API Key。
+
+## 公网版隔离与预算回归（追加）
+
+新增 `tests/test_public_access.py`，检查不同浏览器的研究列表与详情隔离、伪造 Cookie 不得取走研究、公开禁用 Harness / 工作区管理接口、禁止手动证据写入或无限增量刷新、跨站/非 JSON 写入拒绝、整个实例研究上限、云端独立研究入口的 HTML 装载。
+
+2026-11-17 独立仓库 GitHub Actions 上一轮已通过 **125 Python + 4 Node**，见 [Actions](https://github.com/CorreyZhang/EventLens/actions/runs/44104234071)；后续更新以新提交的 Actions 为准。该回归不包含带真实密钥的 Render 端到端实验。
