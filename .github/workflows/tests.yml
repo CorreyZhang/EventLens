@@ -1,0 +1,39 @@
+name: EventLens regression
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Python compilation
+        run: python -m compileall -q .
+      - name: Unit and integration fixtures (no real API keys)
+        env:
+          EVENTLENS_IFIND_NEWS: '0'
+        run: python -m pytest -q tests
+      - name: Frontend and Harness protocol checks
+        run: |
+          node --check static/app.js
+          node --check static/workbench.js
+          node --check harness-navigation/client.js
+          node --check harness_session_bridge.mjs
+          node --test tests/js/navigation.test.cjs
