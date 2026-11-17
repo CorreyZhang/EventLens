@@ -1,0 +1,7 @@
+{
+  "name": "@eventlens/harness-navigation",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {".": "./host.mjs", "./client": "./client.js", "./package.json": "./package.json"},
+  "dsh": {"client": {"platform": "web", "inject": ["@deepseek-ai/dsh-api-session-controller"]}}
+}
