@@ -43,4 +43,4 @@ node --test tests/js/navigation.test.cjs
 
 新增 `tests/test_public_access.py`，检查不同浏览器的研究列表与详情隔离、伪造 Cookie 不得取走研究、公开禁用 Harness / 工作区管理接口、禁止手动证据写入或无限增量刷新、跨站/非 JSON 写入拒绝、整个实例研究上限、云端独立研究入口的 HTML 装载。
 
-2026-11-17 独立仓库 GitHub Actions 上一轮已通过 **125 Python + 4 Node**，见 [Actions](https://github.com/CorreyZhang/EventLens/actions/runs/44104234071)；后续更新以新提交的 Actions 为准。该回归不包含带真实密钥的 Render 端到端实验。
+2026-11-17 独立仓库 GitHub Actions 上一轮已通过 **126 Python + 4 Node**，见 [Actions](https://github.com/CorreyZhang/EventLens/actions/runs/44104640091)；后续更新以新提交的 Actions 为准。该回归不包含带真实密钥的 Render 端到端实验。

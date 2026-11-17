@@ -75,4 +75,4 @@ uvicorn app:app --host 127.0.0.1 --port 8765
 - 使用 Python 3.11 的单个 Render Free Web Service，网页入口为 `/`；本机官方 Harness `/workstation` **不在公网开放**。
 - 公网研究通过签名访客 Cookie 隔离；仅开放必要研究 API，限制单会话/单进程研究与追问次数。Render 空闲休眠后数据、计数和会话映射会重置；不是持久化生产系统。
 - **实时 AI 必须在 Render 服务端配置有效 DeepSeek Key**；不绑定授权的 iFinD/扶摇本机代理；行情不能保证可用。
-- [独立 CI：125 Python + 4 Node 通过（新版）](https://github.com/CorreyZhang/EventLens/actions/runs/44104234071)。仍需在新 commit 上重新验收，真实外网运行与第三方服务有效性不能由 CI 替代。
+- [独立 CI：126 Python + 4 Node 通过（新版）](https://github.com/CorreyZhang/EventLens/actions/runs/44104640091)。仍需在新 commit 上重新验收，真实外网运行与第三方服务有效性不能由 CI 替代。
