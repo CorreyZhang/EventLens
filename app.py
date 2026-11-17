@@ -9,11 +9,12 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Optional
 from concurrent.futures import ThreadPoolExecutor
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import providers
+import public_access
 from evidence import validate_report, validate_report_partial, validate_ref, recompute
 
 ROOT=Path(__file__).resolve().parent
@@ -64,8 +65,16 @@ class Store:
     def note(self,id,text):
         r=self.get(id)
         with self.lock,self.connect() as db: db.execute('UPDATE research SET note=?,note_version=? WHERE id=?',(text,len(r['versions']),id))
-    def recent(self):
-        with self.connect() as db: rows=db.execute('SELECT data FROM research ORDER BY rowid DESC LIMIT 20').fetchall()
+    def recent(self, allowed_ids=None):
+        with self.connect() as db:
+            if allowed_ids is None:
+                rows=db.execute('SELECT data FROM research ORDER BY rowid DESC LIMIT 20').fetchall()
+            elif not allowed_ids:
+                return []
+            else:
+                ids=tuple(allowed_ids)
+                marks=','.join('?' for _ in ids)
+                rows=db.execute('SELECT data FROM research WHERE id IN ('+marks+') ORDER BY rowid DESC LIMIT 20',ids).fetchall()
         return [{'id':r['id'],'question':r['question'],'status':r['status']} for r in map(lambda x:json.loads(x[0]), rows)]
 
 def create_app(db_path=None):
@@ -170,14 +179,22 @@ def create_app(db_path=None):
     @app.get('/api/health')
     def health(): return {'status':'ok','version':'0.5.0','fuyao_configured':(bool(os.getenv('FUYAO_API_KEY')) or __import__('finance_runtime').available()),'ifind_configured':__import__('finance_runtime').available(),'deepseek_configured':bool(os.getenv('DEEPSEEK_API_KEY')),'market_configured':bool(os.getenv('ALPHAVANTAGE_API_KEY'))}
     @app.get('/api/research')
-    def recent(): return store.recent()
+    def recent(request: Request):
+        if public_access.enabled():
+            gate=app.state.demo_gate
+            return store.recent(gate.owned_ids(request.state.demo_guest))
+        return store.recent()
     @app.post('/api/research',status_code=202)
-    def start(req:ResearchInput):
+    def start(req:ResearchInput, request:Request):
         if req.mode not in ('live','preview'): raise HTTPException(422,'模式无效')
         with mutation_lock:
             if sum(r['status'] in ('queued','running') for r in store.recent())>=2: raise HTTPException(429,'已有两个任务在执行，请稍后重试')
             r={'id':uuid.uuid4().hex,'question':req.question,'mode':req.mode,'status':'queued','as_of':date.today().isoformat(), 'steps':[],'sources':[],'claims':[],'events':[],'relations':[],'market':[],'versions':[],'messages':[],'retrieval_errors':[],'ai_status':'尚未调用','cancel_requested':False}
-            cancellation[r['id']]=threading.Event(); store.save(r); POOL.submit(research_run,r['id']); return {'id':r['id']}
+            cancellation[r['id']]=threading.Event(); store.save(r)
+            if public_access.enabled():
+                app.state.demo_gate.register(request.state.demo_guest,r['id'])
+            POOL.submit(research_run,r['id'])
+            return {'id':r['id']}
     @app.post('/api/harness/research',status_code=201)
     def harness_start(req:ResearchInput):
         r={'id':uuid.uuid4().hex,'question':req.question,'mode':'harness','status':'awaiting_evidence','as_of':date.today().isoformat(),'steps':[],'sources':[],'claims':[],'events':[],'relations':[],'market':[],'versions':[],'messages':[],'retrieval_errors':[],'ai_status':'等待 Harness 提交实际工具取得的材料','cancel_requested':False}
@@ -380,6 +397,7 @@ def create_app(db_path=None):
             r['messages'].append(msg); store.save(r); return msg
     from harness_web import install as install_harness_web
     install_harness_web(app,store)
+    public_access.install(app)
     return app
 
 app=create_app()
