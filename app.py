@@ -174,11 +174,20 @@ def create_app(db_path=None):
     from workbench import install
     install(app,store)
 
+    @app.get('/cloud-workstation')
+    def cloud_workstation():
+        if not public_access.enabled():
+            raise HTTPException(404,'仅云端演示模式提供此入口')
+        return FileResponse(ROOT/'static'/'cloud-workstation.html')
     @app.get('/')
-    def home():
+    def home(request: Request):
+        # The left pane of the cloud twin intentionally uses the untouched
+        # original embedded EventLens timeline/workbench UI.
+        if public_access.enabled() and request.query_params.get('embedded') == '1':
+            return FileResponse(ROOT/'static'/'index.html')
         if public_access.enabled():
-            # The public site uses the original independent research UX and
-            # keeps the native Harness iframe/localhost workbench disabled.
+            # Keep the working stand-alone demo at / while the exact-layout
+            # cloud twin is verified separately under /cloud-workstation.
             page=(ROOT/'static'/'index.html').read_text(encoding='utf-8')
             page=page.replace('class="v03"', 'class="v03 public-demo"')
             page=page.replace('<script src="/static/workbench.js?v=0.5.0"></script>',

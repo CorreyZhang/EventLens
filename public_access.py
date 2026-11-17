@@ -97,10 +97,18 @@ def install(app):
             return JSONResponse(status_code=code, content={"detail": message},
                                 headers={"Cache-Control": "no-store"})
 
-        allowed = path == "/" or path == "/api/health" or path.startswith("/static/")
+        allowed = path in ("/", "/cloud-workstation", "/api/health") or path.startswith("/static/")
         allowed = allowed or path == "/api/research" or path.startswith("/api/research/")
+        allowed = allowed or path.startswith("/api/workspace/research/")
         if not allowed:
             return deny(404, "公网演示仅启用独立研究入口；原生 Harness 仅在本地使用")
+
+        if path.startswith("/api/workspace/research/"):
+            bits=path.strip("/").split("/")
+            if (request.method != "GET" or len(bits) != 5 or
+                    bits[:3] != ["api", "workspace", "research"] or bits[4] != "view" or
+                    not gate.owns(guest, bits[3])):
+                return deny(404, "该工作台不属于当前访客")
 
         if path == "/api/research":
             if request.method not in ("GET", "POST"):
@@ -150,5 +158,12 @@ def install(app):
             )
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["X-Frame-Options"] = "DENY"
+        # Allow only the twin's own evidence and chat frames; external
+        # embedding is still denied by SAMEORIGIN.
+        response.headers["X-Frame-Options"] = (
+            "SAMEORIGIN" if
+            (path == "/cloud-workstation" or
+             (path == "/" and request.query_params.get("embedded") == "1") or
+             path == "/static/cloud-chat.html") else "DENY"
+        )
         return response

@@ -119,6 +119,15 @@ def install(app,store):
         This is an isolation guard, not a public multi-user auth mechanism.
         """
         from research_focus import event_in_focus
+        import public_access
+        if public_access.enabled():
+            # The public single-user-per-cookie twin uses the same original
+            # evidence renderer. Ownership is enforced at the guest middleware,
+            # and no unrelated default ticker may be substituted.
+            try:
+                return view(store.get(id), 'NONE', start, end, 'ifind')
+            except (ValueError, KeyError):
+                raise HTTPException(422, '研究日期或交易窗口无效') from None
         bridge=getattr(app.state,'workspace_bridge',None)
         active=bridge.state()['active'] if bridge else None
         if not active or active['research_id']!=id:
