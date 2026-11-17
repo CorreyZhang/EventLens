@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EventLens · 云端双栏工作台</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#1d1d1f;background:#f5f5f7}
+*{box-sizing:border-box}body{margin:0}
+header{height:60px;display:flex;align-items:center;gap:15px;padding:0 21px;background:#fff;border-bottom:1px solid #e4e4e8}
+header strong{font-size:20px;letter-spacing:-.6px}header span{font-size:12px;color:#6e6e73;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header a{color:#0066cc;font-size:12px;text-decoration:none;margin-left:auto;white-space:nowrap}
+.workspace{display:grid;grid-template-columns:minmax(0,58fr) minmax(360px,42fr);height:calc(100dvh - 60px)}
+.workspace>section{display:flex;flex-direction:column;min-height:0;min-width:0;position:relative}
+.workspace>section+section{border-left:1px solid #ddd}
+.caption{display:flex;align-items:center;gap:10px;height:40px;min-height:40px;padding:0 17px;font-size:12px;color:#6e6e73;background:#fafafa}
+.caption strong{color:#2e2e31;font-weight:600}.status{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.caption a{margin-left:auto;color:#0066cc;text-decoration:none}
+iframe{width:100%;flex:1;min-height:0;border:0;background:white}
+#studyOverlay{position:absolute;z-index:4;inset:40px 0 0;background:#f5f5f7;display:none;place-items:center;text-align:center;padding:35px}
+#studyOverlay.visible{display:grid}
+#studyOverlay h2{font-size:23px;margin:0 0 10px}
+#studyOverlay p{font-size:13px;line-height:1.85;color:#777;max-width:380px}
+#referenceTray{background:#fff;border-bottom:1px solid #e5e5e9;padding:10px 14px;display:none;flex-direction:column;gap:8px;max-height:170px;overflow:auto}
+#referenceTray.visible{display:flex}
+.tray-head{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:#555}
+.tray-head small{color:#8e8e93}
+.ref{display:flex;gap:10px;align-items:center;border:1px solid #e4e4e9;background:#f8f8fa;border-radius:8px;padding:8px 10px}
+.ref .quote{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:#48484a}
+.ref button{background:transparent;border:0;color:#0071e3;cursor:pointer;font-size:12px;white-space:nowrap}
+#bridgeStatus{height:auto;min-height:0;font-size:11px;color:#8e6d25;padding:0 17px;display:none;background:#fffbea}
+#bridgeStatus.visible{display:block;padding:7px 17px}
+nav{display:none}
+@media(max-width:850px){
+header{padding:0 12px}header span{display:none}
+.workspace{display:block;height:calc(100dvh - 104px)}
+.workspace>section{height:100%}.workspace>section+section{display:none;border:0}
+body[data-pane="agent"] .workspace>section:first-child{display:none}
+body[data-pane="agent"] .workspace>section+section{display:flex}
+nav{height:44px;display:flex;gap:8px;padding:5px 12px;background:white}
+nav button{flex:1;border:0;border-radius:8px;background:#eaeaea;color:#444}
+nav button.active{background:#0071e3;color:white}
+}
+</style>
+</head>
+<body data-pane="research">
+<header><strong>◈ EventLens</strong><span id="studyTitle">对话即研究 · 证据可以引用</span><a href="/" target="_blank">独立研究窗口 ↗</a></header>
+<nav><button class="active" data-pane="research">信息与证据</button><button data-pane="agent">AI 对话</button></nav>
+<main class="workspace">
+<section id="researchPane">
+  <div class="caption"><strong>研究空间</strong><span class="status" id="selection">右侧输入投资事件即可启动研究</span></div>
+  <iframe id="research" title="EventLens 新闻、行情与证据"></iframe>
+  <div id="studyOverlay"><div><h2 id="overlayTitle">新的研究</h2><p id="overlayMessage">在右侧输入第一个问题，左侧将围绕话题整理新闻、事件与行情。</p></div></div>
+</section>
+<section id="agentPane">
+  <div class="caption"><strong>AI 对话 · 云端适配版</strong><span class="status" id="agentSelection">基于 DeepSeek API · 非原生 Harness</span><a href="/static/cloud-chat.html" target="_blank">独立打开 ↗</a></div>
+  <div id="bridgeStatus" role="status"></div>
+  <div id="referenceTray" aria-label="待发送的证据引用">
+    <div class="tray-head"><strong>已引用到当前研究</strong><small>下一次发送提问时作为证据，不会自动提问</small></div>
+    <div id="refs"></div>
+  </div>
+  <iframe id="agent" src="/static/cloud-chat.html" title="EventLens 在线 AI 研究对话"></iframe>
+</section>
+</main>
+<script defer src="/static/cloud-workstation.js?v=1"></script>
+</body>
+</html>
