@@ -70,3 +70,13 @@ def test_invalid_guest_signature_does_not_grant_existing_study(monkeypatch, tmp_
     bob.cookies.set("eventlens_guest", raw[:-1] + ("0" if raw[-1] != "0" else "1"))
     assert bob.get(f"/api/research/{rid}").status_code == 404
     assert bob.get("/api/research").json() == []
+
+
+def test_public_home_loads_research_interface_not_local_harness(monkeypatch, tmp_path):
+    _, guest, _ = clients(monkeypatch, tmp_path)
+    result = guest.get("/")
+    assert result.status_code == 200
+    assert "public-ui.js" in result.text
+    assert '<script src="/static/workbench.js' not in result.text
+    assert 'id="researchForm"' in result.text
+    assert guest.get("/static/public-ui.js").status_code == 200
